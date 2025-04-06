@@ -19,9 +19,9 @@ namespace ConsoleApp1
 
     public class Program
     {
-        public static string xmlURL = "Your XML URL";
-        public static string xmlErrorURL = "Your Error XML URL";
-        public static string xsdURL = "Your XSD URL";
+        public static string xmlURL = "https://lewine.github.io/Project3/Hotels.xml";
+        public static string xmlErrorURL = "https://lewine.github.io/Project3/HotelsError.xml";
+        public static string xsdURL = "https://lewine.github.io/Project3/Hotels.xsd";
 
         public static void Main(string[] args)
         {
