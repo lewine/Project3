@@ -3,6 +3,7 @@ using System.Xml.Schema;
 using System.Xml;
 using Newtonsoft.Json;
 using System.IO;
+using Newtonsoft.Json.Linq;
 
 
 
@@ -62,7 +63,7 @@ namespace ConsoleApp1
 
                 if (errors.Length == 0)
                 {
-                    return "No Error";
+                    return "No Errors are found";
                 }
                 else
                 {
@@ -82,67 +83,81 @@ namespace ConsoleApp1
                 XmlDocument doc = new XmlDocument();
                 doc.Load(xmlUrl);
 
-                var hotelList = new List<dynamic>();
+                // Root JSON object: { "Hotels": { "Hotel": [ ... ] } }
+                JObject rootObj = new JObject();
+                JObject hotelsObj = new JObject();
+                JArray hotelArray = new JArray();
 
+                // Get all <Hotel> nodes
                 XmlNodeList hotelNodes = doc.SelectNodes("//Hotel");
-                if (hotelNodes == null) return "{}"; 
-
                 foreach (XmlNode hotelNode in hotelNodes)
                 {
-                    dynamic hotelObj = new ExpandoObject();
-                    var hotelDict = (IDictionary<string, object>)hotelObj;
+                    // Each hotel becomes a JObject
+                    JObject hotelObj = new JObject();
 
-                    var nameNode = hotelNode.SelectSingleNode("Name");
+                    // 1) Name
+                    XmlNode nameNode = hotelNode.SelectSingleNode("Name");
                     if (nameNode != null)
-                        hotelDict["Name"] = nameNode.InnerText;
+                    {
+                        hotelObj["Name"] = nameNode.InnerText;
+                    }
 
-                    var phoneNodes = hotelNode.SelectNodes("Phone");
-                    var phoneList = new List<string>();
+                    // 2) Phone (one or more)
+                    JArray phoneList = new JArray();
+                    XmlNodeList phoneNodes = hotelNode.SelectNodes("Phone");
                     foreach (XmlNode p in phoneNodes)
                     {
                         phoneList.Add(p.InnerText);
                     }
-                    hotelDict["Phone"] = phoneList;
+                    hotelObj["Phone"] = phoneList;
 
-                    var addressNode = hotelNode.SelectSingleNode("Address");
-                    dynamic addressObj = new ExpandoObject();
-                    var addressDict = (IDictionary<string, object>)addressObj;
-
+                    // 3) Address
+                    XmlNode addressNode = hotelNode.SelectSingleNode("Address");
+                    JObject addressObj = new JObject();
                     if (addressNode != null)
                     {
-                        addressDict["Number"] = addressNode["Number"]?.InnerText;
-                        addressDict["Street"] = addressNode["Street"]?.InnerText;
-                        addressDict["City"]   = addressNode["City"]?.InnerText;
-                        addressDict["State"]  = addressNode["State"]?.InnerText;
-                        addressDict["Zip"]    = addressNode["Zip"]?.InnerText;
+                        // Sub-elements: Number, Street, City, State, Zip
+                        if (addressNode["Number"] != null)
+                            addressObj["Number"] = addressNode["Number"].InnerText;
+                        if (addressNode["Street"] != null)
+                            addressObj["Street"] = addressNode["Street"].InnerText;
+                        if (addressNode["City"] != null)
+                            addressObj["City"] = addressNode["City"].InnerText;
+                        if (addressNode["State"] != null)
+                            addressObj["State"] = addressNode["State"].InnerText;
+                        if (addressNode["Zip"] != null)
+                            addressObj["Zip"] = addressNode["Zip"].InnerText;
 
-                        var nearestAirportAttr = addressNode.Attributes?["NearestAirport"];
+                        // Optional attribute => _NearestAirport
+                        XmlAttribute nearestAirportAttr = addressNode.Attributes?["NearestAirport"];
                         if (nearestAirportAttr != null)
                         {
-                            addressDict["_NearestAirport"] = nearestAirportAttr.Value;
+                            addressObj["_NearestAirport"] = nearestAirportAttr.Value;
                         }
                     }
-                    hotelDict["Address"] = addressObj;
+                    hotelObj["Address"] = addressObj;
 
-                    var ratingAttr = hotelNode.Attributes?["Rating"];
+                    // 4) Optional Rating attribute => _Rating
+                    XmlAttribute ratingAttr = hotelNode.Attributes?["Rating"];
                     if (ratingAttr != null)
                     {
-                        hotelDict["_Rating"] = ratingAttr.Value;
+                        hotelObj["_Rating"] = ratingAttr.Value;
                     }
 
-                    hotelList.Add(hotelObj);
+                    // Add this hotel to the array
+                    hotelArray.Add(hotelObj);
                 }
 
-                dynamic rootObj = new ExpandoObject();
-                rootObj.Hotels = new ExpandoObject();
-                ((IDictionary<string, object>)rootObj.Hotels)["Hotel"] = hotelList;
+                // Build the final JSON structure
+                hotelsObj["Hotel"] = hotelArray;
+                rootObj["Hotels"] = hotelsObj;
 
-                string jsonText = JsonConvert.SerializeObject(rootObj, Formatting.Indented);
-                return jsonText;
+                // Return a nicely formatted JSON string
+                return rootObj.ToString(Newtonsoft.Json.Formatting.Indented);
             }
             catch (Exception ex)
             {
-                return $"Exception: {ex.Message}";
+                return "Exception: " + ex.Message;
             }
         }
     }

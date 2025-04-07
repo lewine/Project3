@@ -4,9 +4,9 @@
     <Name>Westin</Name>
     <Phone>480-968-8885</Phone>
     <Phone>800-937-8461</Phone>
-    <Address NearestAirport="Sky Harbor">
+    <Address NearestAirport="Sky Habor">
       <Number>11</Number>
-      <Street>E 7th St</Street>
+      <Street>E.7th St</Street>
       <City>Tempe</City>
       <State>AZ</State>
       <Zip>85281</Zip>
@@ -28,7 +28,7 @@
   <Hotel>
     <Name>Marriott</Name>
     <Phone>480-987-6543</Phone>
-    <Address NearestAirport="Sky Harbor">
+    <Address NearestAirport="Sky Habor">
       <Number>100</Number>
       <Street>Central Ave</Street>
       <City>Tucson</City>
